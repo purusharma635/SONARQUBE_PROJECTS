@@ -1,0 +1,12 @@
+---
+- name: Render sonar.properties
+  ansible.builtin.template:
+    src: "sonar.properties.j2"
+    dest: "{{ sonarqube_current_symlink }}/conf/sonar.properties"
+    owner: "{{ sonarqube_user }}"
+    group: "{{ sonarqube_group }}"
+    mode: "0644"
+  notify: restart sonarqube
+
+
+
