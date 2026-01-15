@@ -1,0 +1,19 @@
+# Managed by Ansible
+[Unit]
+Description=SonarQube service
+After=network.target
+
+[Service]
+Type=forking
+User={{ sonarqube_user }}
+Group={{ sonarqube_group }}
+LimitNOFILE=65536
+LimitNPROC=4096
+
+ExecStart={{ sonarqube_current_symlink }}/bin/linux-x86-64/sonar.sh start
+ExecStop={{ sonarqube_current_symlink }}/bin/linux-x86-64/sonar.sh stop
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
