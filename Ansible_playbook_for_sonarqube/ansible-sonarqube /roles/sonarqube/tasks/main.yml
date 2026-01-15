@@ -1,0 +1,13 @@
+---
+- name: Load OS specific vars
+  ansible.builtin.include_vars: "{{ ansible_os_family }}.yml"
+
+- name: Install SonarQube
+  ansible.builtin.import_tasks: install.yml
+
+- name: Configure SonarQube
+  ansible.builtin.import_tasks: configure.yml
+
+- name: Configure service
+  ansible.builtin.import_tasks: service.yml
+
