@@ -1,10 +1,3 @@
-How to Use
-Step 1: Create the script file
-Create a file named sonarqube.sh:
-
-nano sonarqube.sh
-Copy and paste the following script inside the file:
-
 #!/bin/bash
 
 ACTION=$1
@@ -79,18 +72,3 @@ case "$ACTION-$OS" in
         exit 1
         ;;
 esac
-Step 2: Make the script executable
-chmod +x sonarqube.sh
-Step 3: Run the script
-Install SonarQube
-# On Ubuntu
-./sonarqube.sh install ubuntu
-
-# On Amazon Linux
-./sonarqube.sh install amazon-linux
-Uninstall SonarQube
-# On Ubuntu
-./sonarqube.sh uninstall ubuntu
-
-# On Amazon Linux
-./sonarqube.sh uninstall amazon-linux
