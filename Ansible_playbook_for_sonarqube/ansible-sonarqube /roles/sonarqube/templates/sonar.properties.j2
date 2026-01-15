@@ -1,0 +1,23 @@
+# Managed by Ansible
+
+{% if not sonarqube_use_embedded_db | bool %}
+sonar.jdbc.username={{ sonarqube_jdbc_username }}
+sonar.jdbc.password={{ sonarqube_jdbc_password }}
+sonar.jdbc.url={{ sonarqube_jdbc_url }}
+{% endif %}
+
+{% if not sonarqube_use_embedded_db | bool %}
+sonar.jdbc.username={{ sonarqube_jdbc_username }}
+sonar.jdbc.password={{ sonarqube_jdbc_password }}
+sonar.jdbc.url={{ sonarqube_jdbc_url }}
+{% endif %}
+
+{% for k, v in (sonarqube_extra_properties | default({})).items() %}
+{{ k }}={{ v }}
+{% endfor %}
+
+# JVM options
+sonar.web.javaOpts={{ sonarqube_web_java_opts }}
+sonar.ce.javaOpts={{ sonarqube_ce_java_opts }}
+sonar.search.javaOpts={{ sonarqube_search_java_opts }}
+
