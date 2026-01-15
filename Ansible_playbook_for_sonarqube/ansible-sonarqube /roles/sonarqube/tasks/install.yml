@@ -1,0 +1,76 @@
+---
+- name: Update apt cache (Debian/Ubuntu)
+  ansible.builtin.apt:
+    update_cache: true
+    cache_valid_time: 3600
+  when: ansible_os_family == "Debian"
+
+- name: Ensure required packages installed
+  ansible.builtin.package:
+    name:
+      - "{{ (sonarqube_java_package_override | length > 0) | ternary(sonarqube_java_package_override, sonarqube_java_package) }}"
+      - "{{ sonarqube_unzip_package }}"
+    state: present
+
+- name: Ensure group exists
+  ansible.builtin.group:
+    name: "{{ sonarqube_group }}"
+    system: true
+
+- name: Ensure user exists
+  ansible.builtin.user:
+    name: "{{ sonarqube_user }}"
+    group: "{{ sonarqube_group }}"
+    shell: "{{ sonarqube_shell }}"
+    system: true
+    create_home: false
+
+- name: Ensure parent directory exists
+  ansible.builtin.file:
+    path: "{{ sonarqube_parent_dir }}"
+    state: directory
+    mode: "0755"
+
+- name: Set vm.max_map_count
+  ansible.posix.sysctl:
+    name: "vm.max_map_count"
+    value: "{{ sonarqube_vm_max_map_count_value }}"
+    state: present
+    reload: true
+  when: sonarqube_set_vm_max_map_count | bool
+- name: Ensure download directory exists
+  ansible.builtin.file:
+    path: "{{ sonarqube_download_dir }}"
+    state: directory
+    mode: "0755"
+
+- name: Download SonarQube zip
+  ansible.builtin.get_url:
+    url: "{{ sonarqube_download_url }}/sonarqube-{{ sonarqube_version }}.zip"
+    dest: "{{ sonarqube_download_dir }}/sonarqube-{{ sonarqube_version }}.zip"
+    tmp_dest: "{{ sonarqube_download_dir }}"
+    mode: "0644"
+    force: true
+    checksum: "{{ sonarqube_zip_checksum | default(omit) }}"
+
+- name: Unarchive SonarQube
+  ansible.builtin.unarchive:
+    src: "{{ sonarqube_download_dir }}/sonarqube-{{ sonarqube_version }}.zip"
+    dest: "{{ sonarqube_parent_dir }}"
+    remote_src: true
+    creates: "{{ sonarqube_install_dir }}/bin"
+
+- name: Ensure ownership
+  ansible.builtin.file:
+    path: "{{ sonarqube_install_dir }}"
+    state: directory
+    recurse: true
+    owner: "{{ sonarqube_user }}"
+    group: "{{ sonarqube_group }}"
+
+- name: Point current symlink to installed version
+  ansible.builtin.file:
+    src: "{{ sonarqube_install_dir }}"
+    dest: "{{ sonarqube_current_symlink }}"
+    state: link
+  notify: restart sonarqube
