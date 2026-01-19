@@ -1,0 +1,111 @@
+# -------------------------------
+# Install required packages
+# -------------------------------
+- name: Install required packages
+  package:
+    name:
+      - unzip
+      - wget
+      - curl
+    state: present
+
+# -------------------------------
+# Install Java 17
+# -------------------------------
+- name: Install Java 17 (Amazon Linux)
+  yum:
+    name: java-17-amazon-corretto
+    state: present
+  when: ansible_os_family == "RedHat"
+
+- name: Install Java 17 (Ubuntu)
+  apt:
+    name: openjdk-17-jdk
+    state: present
+    update_cache: yes
+  when: ansible_os_family == "Debian"
+
+# -------------------------------
+# Create sonar user
+# -------------------------------
+- name: Create Sonar user
+  user:
+    name: "{{ sonarqube_user }}"
+    shell: /bin/bash
+    create_home: yes
+
+# -------------------------------
+# Download SonarQube
+# -------------------------------
+- name: Download SonarQube
+  get_url:
+    url: "https://binaries.sonarsource.com/Distribution/sonarqube/sonarqube-{{ sonarqube_version }}.zip"
+    dest: /tmp/sonarqube.zip
+
+# -------------------------------
+# Unzip SonarQube
+# -------------------------------
+- name: Unzip SonarQube
+  unarchive:
+    src: /tmp/sonarqube.zip
+    dest: /opt/
+    remote_src: yes
+
+# -------------------------------
+# Rename directory
+# -------------------------------
+- name: Rename SonarQube directory
+  command: mv /opt/sonarqube-{{ sonarqube_version }} {{ sonarqube_home }}
+  args:
+    creates: "{{ sonarqube_home }}"
+
+# -------------------------------
+# Permissions
+# -------------------------------
+- name: Set permissions
+  file:
+    path: "{{ sonarqube_home }}"
+    owner: "{{ sonarqube_user }}"
+    group: "{{ sonarqube_group }}"
+    recurse: yes
+
+# -------------------------------
+# Create systemd service
+# -------------------------------
+- name: Create SonarQube service
+  copy:
+    dest: /etc/systemd/system/sonarqube.service
+    content: |
+      [Unit]
+      Description=SonarQube service
+      After=syslog.target network.target
+
+      [Service]
+      Type=forking
+      ExecStart={{ sonarqube_home }}/bin/linux-x86-64/sonar.sh start
+      ExecStop={{ sonarqube_home }}/bin/linux-x86-64/sonar.sh stop
+      User={{ sonarqube_user }}
+      Group={{ sonarqube_group }}
+      Restart=always
+      LimitNOFILE=65536
+      LimitNPROC=4096
+
+      [Install]
+      WantedBy=multi-user.target
+  notify: restart sonarqube
+
+# -------------------------------
+# Reload systemd
+# -------------------------------
+- name: Reload systemd
+  systemd:
+    daemon_reload: yes
+
+# -------------------------------
+# Start SonarQube
+# -------------------------------
+- name: Start SonarQube
+  systemd:
+    name: sonarqube
+    state: started
+    enabled: yes
