@@ -1,0 +1,6 @@
+sonarqube_version: "9.9.2.77730"
+sonarqube_user: sonar
+sonarqube_group: sonar
+sonarqube_home: /opt/sonarqube
+sonarqube_port: 9000
+java_version: 17
